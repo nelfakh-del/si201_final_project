@@ -28,3 +28,28 @@ GROUP BY year
 ORDER BY year
 """)
 rows = cur.fetchall()
+
+years = [r[0] for r in rows]
+popularity = [r[1] for r in rows]
+
+plt.plot(years, popularity)
+plt.title("Spotify Track Popularity Over Time")
+plt.xlabel("Year")
+plt.ylabel("Popularity")
+plt.show()
+
+cur.execute("""
+SELECT genre, COUNT(*)
+FROM movies
+GROUP BY genre
+""")
+rows = cur.fetchall()
+
+genres = [r[0] for r in rows]
+counts = [r[1] for r in rows]
+
+plt.pie(counts, labels=genres, autopct='%1.1f%%')
+plt.title("Movie Genre Distribution")
+plt.show()
+
+conn.close()
