@@ -1,23 +1,22 @@
-import sqlite3
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+import sqlite3
 
-def setup_spotify_table(cur):
+def setup_spotify(cur):
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS spotify_tracks (
+    CREATE TABLE IF NOT EXISTS spotify (
         id TEXT PRIMARY KEY,
-        name TEXT,
-        artist TEXT,
-        popularity INTEGER,
-        year INTEGER
+        title TEXT,
+        artist TEXT
     )
     """)
 
-def get_spotify_data():
+def fetch_spotify_batch(batch_number):
+    offset = (batch_number - 1) * 25
+
     conn = sqlite3.connect("final.db")
     cur = conn.cursor()
-
-    setup_spotify_table(cur)
+    setup_spotify(cur)
 
     sp = spotipy.Spotify(
         auth_manager=SpotifyClientCredentials(
@@ -26,27 +25,23 @@ def get_spotify_data():
         )
     )
 
-    results = sp.search(q="top hits", type="track", limit=25)
-    tracks = results["tracks"]["items"]
+    results = sp.search(q="top hits", type="track", limit=25, offset=offset)
 
-    for t in tracks:
-        track_id = t["id"]
-        name = t["name"]
-        artist = t["artists"][0]["name"]
-        popularity = t["popularity"]
-        year = int(t["album"]["release_date"][:4])
-
-        print("Saving track:", name)
+    for item in results["tracks"]["items"]:
+        track_id = item["id"]
+        title = item["name"]
+        artist = item["artists"][0]["name"]
 
         cur.execute("""
-            INSERT OR IGNORE INTO spotify_tracks
-            VALUES (?, ?, ?, ?, ?)
-        """, (track_id, name, artist, popularity, year))
+        INSERT OR IGNORE INTO spotify (id, title, artist)
+        VALUES (?, ?, ?)
+        """, (track_id, title, artist))
+
+        print(f"Saved track: {title}")
 
     conn.commit()
     conn.close()
 
-
-# Run this file directly to save Spotify data
 if __name__ == "__main__":
-    get_spotify_data()
+    BATCH = 4  # Change this each run
+    fetch_spotify_batch(BATCH)
