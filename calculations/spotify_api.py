@@ -1,6 +1,10 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import sqlite3
+import spotipy_key_nada
+
+API_KEY_spotify_1 = api_key_client_id.spotipy_key_nada
+API_KEY_spotify_2 = api_key_client_secret.spotipy_key_nada
 
 def setup_spotify(cur):
     cur.execute("""
@@ -20,8 +24,8 @@ def fetch_spotify_batch(batch_number):
 
     sp = spotipy.Spotify(
         auth_manager=SpotifyClientCredentials(
-            client_id="af4c5a166c7a401f97247686d8d15da7",
-            client_secret="14ba3653216b4a599ff4b5a2f10adbcf"
+            client_id=API_KEY_spotify_1,
+            client_secret=API_KEY_spotify_2
         )
     )
 

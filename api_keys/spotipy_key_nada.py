@@ -1,0 +1,2 @@
+api_key_client_id = "af4c5a166c7a401f97247686d8d15da7"
+api_key_client_secret = "14ba3653216b4a599ff4b5a2f10adbcf"
