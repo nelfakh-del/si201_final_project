@@ -4,6 +4,13 @@ import matplotlib.pyplot as plt
 conn = sqlite3.connect("final.db")
 cur = conn.cursor()
 
+cur.execute("PRAGMA table_info(spotify);")
+print("SPOTIFY COLUMNS:", cur.fetchall())
+
+cur.execute("SELECT COUNT(*) FROM spotify;")
+print("SPOTIFY ROW COUNT:", cur.fetchone())
+
+
 # --- Pokémon chart ---
 cur.execute("""
 SELECT type_name, AVG(weight)
@@ -42,24 +49,27 @@ plt.ylabel("Count")
 plt.show()
 
 
-# --- Spotify chart ---
+# --- Spotify Top Artists Chart ---
 cur.execute("""
-SELECT year, AVG(popularity)
-FROM spotify_tracks
-GROUP BY year
-ORDER BY year
+SELECT artist, COUNT(*) as track_count
+FROM spotify
+GROUP BY artist
+ORDER BY track_count DESC
+LIMIT 10
 """)
 rows = cur.fetchall()
 
-plt.figure()    # <<< IMPORTANT
-years = [r[0] for r in rows]
-popularity = [r[1] for r in rows]
+plt.figure()
+artists = [r[0] for r in rows]
+counts = [r[1] for r in rows]
 
-plt.plot(years, popularity)
-plt.title("Spotify Track Popularity Over Time")
-plt.xlabel("Year")
-plt.ylabel("Popularity")
+plt.bar(artists, counts)
+plt.title("Top 10 Artists in Spotify Dataset")
+plt.xlabel("Artist")
+plt.ylabel("Number of Tracks")
+plt.xticks(rotation=45, ha='right')
 plt.show()
+
 
 # --- Movies chart ---
 cur.execute("""

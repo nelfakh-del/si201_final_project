@@ -1,7 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import sqlite3
-import spotipy_key_nada
+import spotipy_key_nada.py
 
 API_KEY_spotify_1 = api_key_client_id.spotipy_key_nada
 API_KEY_spotify_2 = api_key_client_secret.spotipy_key_nada

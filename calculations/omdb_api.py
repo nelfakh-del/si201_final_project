@@ -1,6 +1,6 @@
 import requests
 import sqlite3
-import omdb_key_sabyena
+import omdb_key_sabyena.py
 
 MOVIES = [
     "Inception","Titanic","Frozen","Moana","Coco","Up","Cars","Soul","Shrek",
