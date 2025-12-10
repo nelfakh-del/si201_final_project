@@ -1,6 +1,6 @@
 import requests
 import sqlite3
-import omdb_key_sabyena.py
+import omdb_key_sabyena
 
 MOVIES = [
     "Inception","Titanic","Frozen","Moana","Coco","Up","Cars","Soul","Shrek",
@@ -32,7 +32,7 @@ MOVIES = [
     "The Prestige","The Departed"
 ]
 
-API_KEY_omdb = api_key_omdb.omdb_key_sabyena
+API_KEY_omdb = omdb_key_sabyena.api_key_omdb
 
 def get_batch(batch_number):
     start = (batch_number - 1) * 25
