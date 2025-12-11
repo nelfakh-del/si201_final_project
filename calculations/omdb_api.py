@@ -34,20 +34,31 @@ MOVIES = [
 
 API_KEY_omdb = omdb_key_sabyena.api_key_omdb
 
+
+def setup_movies(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS genres (
+        id INTEGER PRIMARY KEY,
+        name TEXT UNIQUE
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS movies (
+        title TEXT PRIMARY KEY,
+        year INTEGER,
+        genre_id INTEGER,
+        rating REAL,
+        FOREIGN KEY (genre_id) REFERENCES genres(id)
+    )
+    """)
+
+
 def get_batch(batch_number):
     start = (batch_number - 1) * 25
     end = start + 25
     return MOVIES[start:end]
 
-def setup_movies(cur):
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS movies (
-        title TEXT PRIMARY KEY,
-        year INTEGER,
-        genre TEXT,
-        rating REAL
-    )
-    """)
 
 def fetch_movies(batch_number):
     conn = sqlite3.connect("final.db")
@@ -64,21 +75,28 @@ def fetch_movies(batch_number):
         if data.get("Response") == "False":
             continue
 
-        if "N/A" in (data["Year"], data["Genre"], data["imdbRating"]):
-            continue
+        year = None if data["Year"] == "N/A" else int(data["Year"])
+        genre_name = None if data["Genre"] == "N/A" else data["Genre"].split(",")[0].strip()
+        rating = None if data["imdbRating"] == "N/A" else float(data["imdbRating"])
 
-        genre = data["Genre"].split(",")[0].strip()
+        if genre_name is None:
+            genre_id = None
+        else:
+            cur.execute("INSERT OR IGNORE INTO genres (name) VALUES (?)", (genre_name,))
+            cur.execute("SELECT id FROM genres WHERE name = ?", (genre_name,))
+            genre_id = cur.fetchone()[0]
 
         cur.execute("""
-        INSERT OR IGNORE INTO movies (title, year, genre, rating)
+        INSERT OR IGNORE INTO movies (title, year, genre_id, rating)
         VALUES (?, ?, ?, ?)
-        """, (data["Title"], int(data["Year"]), genre, float(data["imdbRating"])))
+        """, (data["Title"], year, genre_id, rating))
 
         print(f"Saved {data['Title']}")
 
     conn.commit()
     conn.close()
 
+
 if __name__ == "__main__":
-    BATCH = 5  # change for each run
+    BATCH = 5    # Change this each run
     fetch_movies(BATCH)

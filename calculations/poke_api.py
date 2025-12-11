@@ -2,6 +2,7 @@ import requests
 import sqlite3
 
 def setup_tables(cur):
+
     cur.execute("""
     CREATE TABLE IF NOT EXISTS pokemon (
         id INTEGER PRIMARY KEY,
@@ -12,11 +13,19 @@ def setup_tables(cur):
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS types (
+        id INTEGER PRIMARY KEY,
+        name TEXT UNIQUE
+    )
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS pokemon_types (
         pokemon_id INTEGER,
-        type_name TEXT,
-        PRIMARY KEY (pokemon_id, type_name),
-        FOREIGN KEY(pokemon_id) REFERENCES pokemon(id)
+        type_id INTEGER,
+        PRIMARY KEY (pokemon_id, type_id),
+        FOREIGN KEY(pokemon_id) REFERENCES pokemon(id),
+        FOREIGN KEY(type_id) REFERENCES types(id)
     )
     """)
 
@@ -39,10 +48,13 @@ def fetch_pokemon_batch(batch_number):
 
         for t in data["types"]:
             type_name = t["type"]["name"]
+            cur.execute("INSERT OR IGNORE INTO types (name) VALUES (?)", (type_name,))
+            cur.execute("SELECT id FROM types WHERE name = ?", (type_name,))
+            type_id = cur.fetchone()[0]
             cur.execute("""
-            INSERT OR IGNORE INTO pokemon_types (pokemon_id, type_name)
+            INSERT OR IGNORE INTO pokemon_types (pokemon_id, type_id)
             VALUES (?, ?)
-            """, (poke_id, type_name))
+            """, (poke_id, type_id))
 
         print(f"Saved {data['name']}")
 
@@ -50,5 +62,5 @@ def fetch_pokemon_batch(batch_number):
     conn.close()
 
 if __name__ == "__main__":
-    BATCH = 4   # Change to 1 → 2 → 3 → 4 each run
+    BATCH = 4     # Change this each run
     fetch_pokemon_batch(BATCH)
