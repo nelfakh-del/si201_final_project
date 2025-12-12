@@ -4,37 +4,43 @@ import matplotlib.pyplot as plt
 conn = sqlite3.connect("final.db")
 cur = conn.cursor()
 
-cur.execute("PRAGMA table_info(spotify);")
-print("SPOTIFY COLUMNS:", cur.fetchall())
+#cur.execute("PRAGMA table_info(spotify);")
+#print("SPOTIFY COLUMNS:", cur.fetchall())
 
-cur.execute("SELECT COUNT(*) FROM spotify;")
-print("SPOTIFY ROW COUNT:", cur.fetchone())
+#cur.execute("SELECT COUNT(*) FROM spotify;")
+#print("SPOTIFY ROW COUNT:", cur.fetchone())
 
 
-# --- Pokémon chart ---
+#average pokemon weight by type
 cur.execute("""
-SELECT type_name, AVG(weight)
+SELECT types.name, AVG(pokemon.weight)
 FROM pokemon
 JOIN pokemon_types ON pokemon.id = pokemon_types.pokemon_id
-GROUP BY type_name
+JOIN types ON pokemon_types.type_id = types.id
+GROUP BY types.name
+ORDER BY AVG(pokemon.weight) DESC
 """)
 rows = cur.fetchall()
 
-plt.figure()    # <<< IMPORTANT
+plt.figure()
 types = [r[0] for r in rows]
 weights = [r[1] for r in rows]
 
 plt.bar(types, weights)
 plt.title("Average Pokémon Weight by Type")
 plt.xlabel("Type")
-plt.ylabel("Weight")
+plt.ylabel("Average Weight")
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.show()
 
-# --- Pokémon Count by Type ---
+#count of pokemon per type
 cur.execute("""
-SELECT type_name, COUNT(*)
+SELECT types.name, COUNT(*)
 FROM pokemon_types
-GROUP BY type_name
+JOIN types ON pokemon_types.type_id = types.id
+GROUP BY types.name
+ORDER BY COUNT(*) DESC
 """)
 rows = cur.fetchall()
 
@@ -43,19 +49,20 @@ types = [r[0] for r in rows]
 counts = [r[1] for r in rows]
 
 plt.bar(types, counts)
-plt.title("Number of Pokémon per Type")
+plt.title("Number of Pokémon Per Type")
 plt.xlabel("Type")
 plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.show()
 
-
-# --- Spotify Top Artists Chart ---
+#spotify - count tracks per artist
 cur.execute("""
-SELECT artist, COUNT(*) as track_count
+SELECT artists.name, COUNT(*)
 FROM spotify
-GROUP BY artist
-ORDER BY track_count DESC
-LIMIT 10
+JOIN artists ON spotify.artist_id = artists.id
+GROUP BY artists.name
+ORDER BY COUNT(*) DESC
 """)
 rows = cur.fetchall()
 
@@ -64,26 +71,28 @@ artists = [r[0] for r in rows]
 counts = [r[1] for r in rows]
 
 plt.bar(artists, counts)
-plt.title("Top 10 Artists in Spotify Dataset")
+plt.title("Tracks Collected Per Artist (Spotify)")
 plt.xlabel("Artist")
-plt.ylabel("Number of Tracks")
-plt.xticks(rotation=45, ha='right')
+plt.ylabel("Track Count")
+plt.xticks(rotation=90)
+plt.tight_layout()
 plt.show()
 
-
-# --- Movies chart ---
+#Movies count by genre
 cur.execute("""
-SELECT genre, COUNT(*)
+SELECT genres.name, COUNT(*)
 FROM movies
-GROUP BY genre
+JOIN genres ON movies.genre_id = genres.id
+GROUP BY genres.name
+ORDER BY COUNT(*) DESC
 """)
 rows = cur.fetchall()
 
-plt.figure()    # <<< IMPORTANT
+plt.figure()
 genres = [r[0] for r in rows]
 counts = [r[1] for r in rows]
 
-plt.pie(counts, labels=genres, autopct='%1.1f%%')
+plt.pie(counts, labels=genres, autopct="%1.1f%%")
 plt.title("Movie Genre Distribution")
 plt.show()
 
