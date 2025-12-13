@@ -62,5 +62,5 @@ def fetch_pokemon_batch(batch_number):
     conn.close()
 
 if __name__ == "__main__":
-    BATCH = 4     # Change this each run
+    BATCH = 2     # Change this each run
     fetch_pokemon_batch(BATCH)

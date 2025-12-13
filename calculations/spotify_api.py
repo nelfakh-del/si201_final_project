@@ -85,5 +85,5 @@ def fetch_spotify_batch(batch_number):
     print(f"\nFinished. Saved {collected} clean tracks.\n")
 
 if __name__ == "__main__":
-    BATCH = 4     # Change this each run
+    BATCH = 2     # Change this each run
     fetch_spotify_batch(BATCH)

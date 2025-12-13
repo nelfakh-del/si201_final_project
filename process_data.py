@@ -5,33 +5,38 @@ cur = conn.cursor()
 
 # Example calculation: average Pokémon weight by type
 cur.execute("""
-SELECT type_name, AVG(weight)
+SELECT types.name, AVG(pokemon.weight)
 FROM pokemon
 JOIN pokemon_types ON pokemon.id = pokemon_types.pokemon_id
-GROUP BY type_name
+JOIN types ON pokemon_types.type_id = types.id
+GROUP BY types.name
 """)
 
 avg_weights = cur.fetchall()
-print("Average Pokémon weights:", avg_weights)
+print("Average Pokémon weights by Type:", avg_weights)
 
-# Example: Spotify avg popularity per year
+# Example: Spotify number of tracks per artist
 cur.execute("""
-SELECT year, AVG(popularity)
-FROM spotify_tracks
-GROUP BY year
+SELECT artists.name, COUNT(*)
+FROM spotify
+JOIN artists ON spotify.artist_id = artists.id
+GROUP BY artists.name
+ORDER BY COUNT(*) DESC
 """)
 
-avg_pop = cur.fetchall()
-print("Spotify averages:", avg_pop)
+artist_track_counts = cur.fetchall()
+print("\nTrackes per Artist", artist_track_counts)
 
 # Example: movie counts by genre
 cur.execute("""
-SELECT genre, COUNT(*)
+SELECT genres.name, COUNT(*)
 FROM movies
-GROUP BY genre
+JOIN genres ON movies.genre_id = genres.id
+GROUP BY genres.name
+ORDER BY COUNT(*) DESC
 """)
 
 genre_counts = cur.fetchall()
-print("Genre counts:", genre_counts)
+print("\nMovie Counts by Genre", genre_counts)
 
 conn.close()

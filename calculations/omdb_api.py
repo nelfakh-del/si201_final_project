@@ -98,5 +98,5 @@ def fetch_movies(batch_number):
 
 
 if __name__ == "__main__":
-    BATCH = 5    # Change this each run
+    BATCH = 2    # Change this each run
     fetch_movies(BATCH)
