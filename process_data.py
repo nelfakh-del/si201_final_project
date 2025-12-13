@@ -1,4 +1,7 @@
+import sys
 import sqlite3
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 conn = sqlite3.connect("final.db")
 cur = conn.cursor()
