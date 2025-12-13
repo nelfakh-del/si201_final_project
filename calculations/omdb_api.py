@@ -1,6 +1,11 @@
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
+
 import requests
 import sqlite3
 import omdb_key_sabyena
+
+DB_NAME = "final.db"
 
 MOVIES = [
     "Inception","Titanic","Frozen","Moana","Coco","Up","Cars","Soul","Shrek",
@@ -35,6 +40,8 @@ MOVIES = [
 API_KEY_omdb = omdb_key_sabyena.api_key_omdb
 
 
+# ------------------ TABLE SETUP ------------------
+
 def setup_movies(cur):
     cur.execute("""
     CREATE TABLE IF NOT EXISTS genres (
@@ -54,36 +61,78 @@ def setup_movies(cur):
     """)
 
 
+# ------------------ BATCH TRACKING ------------------
+
+def setup_batches(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS batches (
+        api_name TEXT PRIMARY KEY,
+        last_batch INTEGER
+    )
+    """)
+
+
+def get_next_batch(cur, api_name):
+    cur.execute("""
+    SELECT last_batch FROM batches WHERE api_name = ?
+    """, (api_name,))
+    row = cur.fetchone()
+
+    if row is None:
+        cur.execute("""
+        INSERT INTO batches (api_name, last_batch)
+        VALUES (?, 1)
+        """, (api_name,))
+        return 1
+    else:
+        next_batch = row[0] + 1
+        cur.execute("""
+        UPDATE batches
+        SET last_batch = ?
+        WHERE api_name = ?
+        """, (next_batch, api_name))
+        return next_batch
+
+
+# ------------------ HELPERS ------------------
+
 def get_batch(batch_number):
     start = (batch_number - 1) * 25
     end = start + 25
     return MOVIES[start:end]
 
 
+# ------------------ MAIN FUNCTION ------------------
+
 def fetch_movies():
-    conn = sqlite3.connect("final.db")
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
     setup_movies(cur)
     setup_batches(cur)
 
     batch_number = get_next_batch(cur, "omdb")
-
     titles = get_batch(batch_number)
-    api_key = API_KEY_omdb
+
+    print(f"\nFetching OMDB batch {batch_number} ({len(titles)} movies)\n")
 
     for title in titles:
-        url = f"http://www.omdbapi.com/?apikey={api_key}&t={title}"
-        data = requests.get(url).json()
+        url = f"http://www.omdbapi.com/?apikey={API_KEY_omdb}&t={title}"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            continue
+
+        data = response.json()
 
         if data.get("Response") == "False":
             continue
 
         year = None if data["Year"] == "N/A" else int(data["Year"])
-        genre_name = None if data["Genre"] == "N/A" else data["Genre"].split(",")[0].strip()
         rating = None if data["imdbRating"] == "N/A" else float(data["imdbRating"])
 
-        if genre_name:
+        if data["Genre"] != "N/A":
+            genre_name = data["Genre"].split(",")[0].strip()
             cur.execute("INSERT OR IGNORE INTO genres (name) VALUES (?)", (genre_name,))
             cur.execute("SELECT id FROM genres WHERE name = ?", (genre_name,))
             genre_id = cur.fetchone()[0]
@@ -95,10 +144,12 @@ def fetch_movies():
         VALUES (?, ?, ?, ?)
         """, (data["Title"], year, genre_id, rating))
 
-        print(f"Saved {data['Title']}")
+        print(f"Saved movie: {data['Title']}")
 
     conn.commit()
     conn.close()
+
+    print(f"\nFinished OMDB batch {batch_number}\n")
 
 
 if __name__ == "__main__":
