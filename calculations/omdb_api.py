@@ -60,13 +60,17 @@ def get_batch(batch_number):
     return MOVIES[start:end]
 
 
-def fetch_movies(batch_number):
+def fetch_movies():
     conn = sqlite3.connect("final.db")
     cur = conn.cursor()
-    setup_movies(cur)
 
-    api_key = API_KEY_omdb
+    setup_movies(cur)
+    setup_batches(cur)
+
+    batch_number = get_next_batch(cur, "omdb")
+
     titles = get_batch(batch_number)
+    api_key = API_KEY_omdb
 
     for title in titles:
         url = f"http://www.omdbapi.com/?apikey={api_key}&t={title}"
@@ -79,12 +83,12 @@ def fetch_movies(batch_number):
         genre_name = None if data["Genre"] == "N/A" else data["Genre"].split(",")[0].strip()
         rating = None if data["imdbRating"] == "N/A" else float(data["imdbRating"])
 
-        if genre_name is None:
-            genre_id = None
-        else:
+        if genre_name:
             cur.execute("INSERT OR IGNORE INTO genres (name) VALUES (?)", (genre_name,))
             cur.execute("SELECT id FROM genres WHERE name = ?", (genre_name,))
             genre_id = cur.fetchone()[0]
+        else:
+            genre_id = None
 
         cur.execute("""
         INSERT OR IGNORE INTO movies (title, year, genre_id, rating)
@@ -98,5 +102,4 @@ def fetch_movies(batch_number):
 
 
 if __name__ == "__main__":
-    BATCH = 2    # Change this each run
-    fetch_movies(BATCH)
+    fetch_movies()

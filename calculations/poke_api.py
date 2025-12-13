@@ -29,13 +29,17 @@ def setup_tables(cur):
     )
     """)
 
-def fetch_pokemon_batch(batch_number):
-    start = (batch_number - 1) * 25 + 1
-    end = start + 25
-
+def fetch_pokemon_batch():
     conn = sqlite3.connect("final.db")
     cur = conn.cursor()
+
     setup_tables(cur)
+    setup_batches(cur)
+
+    batch_number = get_next_batch(cur, "pokemon")
+
+    start = (batch_number - 1) * 25 + 1
+    end = start + 25
 
     for poke_id in range(start, end):
         url = f"https://pokeapi.co/api/v2/pokemon/{poke_id}"
@@ -51,6 +55,7 @@ def fetch_pokemon_batch(batch_number):
             cur.execute("INSERT OR IGNORE INTO types (name) VALUES (?)", (type_name,))
             cur.execute("SELECT id FROM types WHERE name = ?", (type_name,))
             type_id = cur.fetchone()[0]
+
             cur.execute("""
             INSERT OR IGNORE INTO pokemon_types (pokemon_id, type_id)
             VALUES (?, ?)
@@ -62,5 +67,5 @@ def fetch_pokemon_batch(batch_number):
     conn.close()
 
 if __name__ == "__main__":
-    BATCH = 2     # Change this each run
-    fetch_pokemon_batch(BATCH)
+    fetch_pokemon_batch()
+
