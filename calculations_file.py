@@ -1,3 +1,6 @@
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
+
 import sqlite3
 
 DB_NAME = "final.db"
@@ -59,7 +62,7 @@ def run_calculations():
     for row in cur.fetchall():
         print(row)
 
-    # 5. Number of tracks collected per artist (Spotify)
+    # 5. Top 10 artists by number of tracks collected (Spotify)
     cur.execute("""
     SELECT artists.name, COUNT(*)
     FROM spotify
@@ -73,7 +76,6 @@ def run_calculations():
         print(row)
 
     conn.close()
-
 
 
 if __name__ == "__main__":
